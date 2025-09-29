@@ -1,0 +1,41 @@
+{
+  "name": "521f0135-5c1e-4344-8fed-6310e8f92d04",
+  "displayName": "Ani-Identification-Api",
+  "genericWebService": {
+    "uri": "https://dev1-cct.rogers.com/dev01-identification/ivr-identification-ms/idc/data?brand=FIDO\u0026searchHomeContact=Y\u0026searchMobileContact=Y\u0026searchBusinessContact=Y\u0026phoneNumber=$session.params.Ani\u0026predictiveInd=Y",
+    "requestHeaders": [ {
+      "key": "brand",
+      "value": "FIDO"
+    }, {
+      "key": "cdr",
+      "value": "112432245667775757"
+    }, {
+      "key": "clientSystem",
+      "value": "IVR"
+    }, {
+      "key": "ivrSubscriptionKey",
+      "value": "f9422c1450c747aaaca69253a489f3c6"
+    }, {
+      "key": "transactionDateTime",
+      "value": "2024-11-07T10:23:00"
+    }, {
+      "key": "transactionId",
+      "value": "4545453232"
+    } ],
+    "webhookType": "FLEXIBLE",
+    "httpMethod": "GET",
+    "parameterMapping": [ {
+      "key": "AccountList",
+      "value": "$.idcData.primaryContacts[*].customers[*].accounts[*].accountNumber"
+    }, {
+      "key": "Api-02_Resp",
+      "value": "$.identifiedCustomer"
+    }, {
+      "key": "returnCode",
+      "value": "$.returnCode"
+    } ]
+  },
+  "timeout": {
+    "seconds": 15
+  }
+}

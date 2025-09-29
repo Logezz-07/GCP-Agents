@@ -1,0 +1,11 @@
+{
+  "name": "c7b58c62-d03a-4dde-a8ab-bbe181ede0af",
+  "displayName": "Webhook-Standard-Test",
+  "genericWebService": {
+    "uri": "https://ani-identification-v1-205115177972.us-central1.run.app",
+    "webhookType": "STANDARD"
+  },
+  "timeout": {
+    "seconds": 5
+  }
+}

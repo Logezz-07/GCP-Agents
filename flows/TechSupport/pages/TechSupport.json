@@ -1,0 +1,26 @@
+{
+  "name": "13dbcd72-3948-4339-9e10-9726a32b38ff",
+  "displayName": "TechSupport",
+  "form": {
+  
+  },
+  "entryFulfillment": {
+    "messages": [ {
+      "text": {
+        "text": [ "Okay, i believe it is related to technical support" ]
+      },
+      "languageCode": "en"
+    } ]
+  },
+  "transitionRoutes": [ {
+    "condition": "True",
+    "triggerFulfillment": {
+      "setParameterActions": [ {
+        "parameter": "ExitType",
+        "value": "Agent"
+      } ]
+    },
+    "targetFlow": "Default Start Flow",
+    "name": "4b782d50-6544-403d-9d1e-c7d0b3209e1d"
+  } ]
+}

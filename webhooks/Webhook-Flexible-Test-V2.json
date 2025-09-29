@@ -1,0 +1,17 @@
+{
+  "name": "2a6814cc-b644-4ab8-b0c0-e5ca79f95ea1",
+  "displayName": "Webhook-Flexible-Test-V2",
+  "genericWebService": {
+    "uri": "https://ani-identification-v2-205115177972.us-central1.run.app",
+    "webhookType": "FLEXIBLE",
+    "httpMethod": "POST",
+    "requestBody": "{\n  \"exampleParam\": \"test\"\n}",
+    "parameterMapping": [ {
+      "key": "apiMessage",
+      "value": "$.apiMessage"
+    } ]
+  },
+  "timeout": {
+    "seconds": 5
+  }
+}

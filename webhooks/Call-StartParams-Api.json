@@ -1,0 +1,68 @@
+{
+  "name": "31fa8c7a-2033-456f-a559-87ff1a7153ae",
+  "displayName": "Call-StartParams-Api",
+  "genericWebService": {
+    "uri": "https://dev1-cct.rogers.com/dev01-config/ivr-config-ms/ivr/$session.params.Dnis/call-start/params",
+    "requestHeaders": [ {
+      "key": "brand",
+      "value": "FIDO"
+    }, {
+      "key": "cdr",
+      "value": "112432245667775757"
+    }, {
+      "key": "clientSystem",
+      "value": "IVR"
+    }, {
+      "key": "ivrSubscriptionKey",
+      "value": "f9422c1450c747aaaca69253a489f3c6"
+    }, {
+      "key": "transactionDateTime",
+      "value": "024-11-07T10:23:00"
+    }, {
+      "key": "transactionId",
+      "value": "454545323"
+    } ],
+    "webhookType": "FLEXIBLE",
+    "httpMethod": "GET",
+    "parameterMapping": [ {
+      "key": "HomeContact",
+      "value": "$.dnisParams.icmSearch.searchHomeContact"
+    }, {
+      "key": "MobileContact",
+      "value": "$.dnisParams.icmSearch.searchMobileContact"
+    }, {
+      "key": "SearchBusinessContact",
+      "value": "$.dnisParams.icmSearch.searchBusinessContact"
+    }, {
+      "key": "aniConfirm",
+      "value": "$.dnisParams.aniConfirm"
+    }, {
+      "key": "aniLookup",
+      "value": "$.dnisParams.aniLookup"
+    }, {
+      "key": "dnisLang",
+      "value": "$.dnisParams.language.offerLanguageMenu"
+    }, {
+      "key": "identifyAccount",
+      "value": "$.dnisParams.identifyAccount"
+    }, {
+      "key": "npaLanguage",
+      "value": "$.aniParams.npaLanguage"
+    }, {
+      "key": "offerlanguageMenu",
+      "value": "$.dnisParams.language.offerLanguageMenu"
+    }, {
+      "key": "predctiveEnd",
+      "value": "$.dnisParams.predictiveInd"
+    }, {
+      "key": "returnCode",
+      "value": "$.returnCode"
+    }, {
+      "key": "validAni",
+      "value": "$.aniParams.validANI"
+    } ]
+  },
+  "timeout": {
+    "seconds": 5
+  }
+}

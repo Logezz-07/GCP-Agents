@@ -1,0 +1,11 @@
+{
+  "name": "f59a87a2-8aa0-4d11-86c8-8679e7b5d3c6",
+  "displayName": "Webhook-Standard-Test-V2",
+  "genericWebService": {
+    "uri": "https://callstart-params-v1-205115177972.us-central1.run.app",
+    "webhookType": "STANDARD"
+  },
+  "timeout": {
+    "seconds": 20
+  }
+}
