@@ -35,7 +35,7 @@ jobs:
       - name: Merge Dev into Release
         run: |
           git checkout Release
-          git merge origin/Dev --no-ff -m "Merge Dev into Release"
+          git merge Dev --no-ff -m "Merge Dev into Release"
           git push origin Release
 
       - name: Create and push tag
