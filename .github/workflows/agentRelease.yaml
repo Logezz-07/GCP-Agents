@@ -11,6 +11,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    environment: production
 
     env:
       WEBHOOKS_DIR: "webhooks"  # your webhook JSON folder
