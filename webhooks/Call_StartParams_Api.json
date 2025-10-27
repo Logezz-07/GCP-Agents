@@ -1,6 +1,6 @@
 {
   "name": "31fa8c7a-2033-456f-a559-87ff1a7153ae",
-  "displayName": "Call-StartParams-Api",
+  "displayName": "Call_StartParams_Api",
   "genericWebService": {
     "uri": "https://dev1-cct.rogers.com/dev01-config/ivr-config-ms/ivr/$session.params.Dnis/call-start/params",
     "requestHeaders": [ {
