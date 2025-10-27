@@ -14,18 +14,18 @@ jobs:
       REGION: "us-central1"               
 
     steps:
-      - name: 🛎️ Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: Dev
 
-      - name: ⚙️ Configure Git
+      - name: Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: 🔄 Update Webhook URLs
+      - name: Update Webhook URLs
         run: |
           echo "🔍 Checking and updating webhook URLs..."
           any_missing=false
@@ -41,7 +41,7 @@ jobs:
               any_missing=true
             else
               echo "✅ Updating $filename with URL → $webhook_url"
-              jq --arg url "$webhook_url" '.genericWebService.url = $url' "$file" > tmp.json && mv tmp.json "$file"
+              jq --arg url "$webhook_url" '.genericWebService.uri = $url' "$file" > tmp.json && mv tmp.json "$file"
             fi
           done
           
@@ -50,16 +50,7 @@ jobs:
             exit 1
           fi
 
-      - name: 🔎 Show updated webhook URLs
-        run: |
-          echo "✅ Final Webhook URLs:"
-          for file in $WEBHOOKS_DIR/*.json; do
-            filename=$(basename "$file" .json)
-            url=$(jq -r '.genericWebService.url' "$file")
-            echo "→ $filename : $url"
-          done
-
-      - name: 🌿 Checkout Release branch
+      - name: Checkout Release branch
         run: |
           if git show-ref --verify --quiet refs/heads/Release; then
             git checkout Release
@@ -67,17 +58,17 @@ jobs:
             git checkout -b Release
           fi
 
-      - name: 🔁 Merge Dev into Release
+      - name: Merge Dev into Release
         run: |
           git merge Dev --no-ff -m "Merge Dev into Release with updated webhook URLs"
 
-      - name: 💾 Commit and push updated webhooks
+      - name: Commit and push updated webhooks
         run: |
           git add $WEBHOOKS_DIR/*.json
           git commit -m "Updated webhook URLs for project ${PROJECT_ID}" || echo "No webhook updates"
           git push origin Release
 
-      - name: 🏷️ Generate and push next version tag
+      - name:  Generate and push next version tag
         id: tag
         run: |
           echo "🔢 Generating next tag version..."
