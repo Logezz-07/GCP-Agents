@@ -37,10 +37,10 @@ jobs:
             env_var_value=$(printenv "$filename" || true)
 
             if [ -z "$env_var_value" ]; then
-              echo "❌ Missing environment variable for $filename"
+              echo "❌ Missing production webhook url for $filename"
               any_missing=true
             else
-              echo "✅ Found env for $filename = $env_var_value"
+              echo "✅ Found production webhook url for $filename = $env_var_value"
               jq --arg url "$env_var_value" '.genericWebService.url = $url' "$file" > tmp.json && mv tmp.json "$file"
             fi
           done
