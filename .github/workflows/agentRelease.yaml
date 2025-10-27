@@ -2,11 +2,6 @@ name: Release from Dev
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag version (e.g., v1.0.X)'
-        required: true
-        type: string
 
 jobs:
   release:
@@ -14,58 +9,57 @@ jobs:
     environment: production
 
     env:
-      WEBHOOKS_DIR: "webhooks"  # your webhook JSON folder
+      WEBHOOKS_DIR: "webhooks"
+      PROJECT_ID: ${{ vars.PROJECT_ID }}  
+      REGION: "us-central1"               
 
     steps:
-      - name: Checkout repository
+      - name: 🛎️ Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: Dev
 
-      - name: Configure Git
+      - name: ⚙️ Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Update Webhook URLs
+      - name: 🔄 Update Webhook URLs
         run: |
           echo "🔍 Checking and updating webhook URLs..."
           any_missing=false
           
           for file in $WEBHOOKS_DIR/*.json; do
             filename=$(basename "$file" .json)
-            env_key=$(echo "$filename" | tr '[:lower:]' '[:upper:]' | tr '-' '_' | tr ' ' '_' )
-            env_var_value="${!env_key}"
-            echo "Value: $env_var_value"
+            function_name=$(echo "$filename" | tr '[:upper:]' '[:lower:]')
             
-            echo "🔹 File: $filename → ENV: $env_key"
+            webhook_url="https://${REGION}-${PROJECT_ID}.cloudfunctions.net/${function_name}"
             
-
-            if [ -z "$env_var_value" ]; then
-              echo "❌ Missing production webhook url for $filename"
+            if [ -z "$PROJECT_ID" ]; then
+              echo "❌ Missing PROJECT_ID environment variable!"
               any_missing=true
             else
-              echo "✅ Found production webhook url for $filename = $env_var_value"
-              jq --arg url "$env_var_value" '.genericWebService.url = $url' "$file" > tmp.json && mv tmp.json "$file"
+              echo "✅ Updating $filename with URL → $webhook_url"
+              jq --arg url "$webhook_url" '.genericWebService.url = $url' "$file" > tmp.json && mv tmp.json "$file"
             fi
           done
           
           if [ "$any_missing" = true ]; then
-            echo "🚫 One or more environment variables are missing. Exiting."
+            echo "🚫 Missing required environment variables. Exiting."
             exit 1
           fi
 
-      - name: Show updated webhook URLs
+      - name: 🔎 Show updated webhook URLs
         run: |
-          echo "🔎 Updated webhook URLs:"
+          echo "✅ Final Webhook URLs:"
           for file in $WEBHOOKS_DIR/*.json; do
             filename=$(basename "$file" .json)
             url=$(jq -r '.genericWebService.url' "$file")
             echo "→ $filename : $url"
           done
 
-      - name: Checkout or create Release branch
+      - name: 🌿 Checkout or create Release branch
         run: |
           if git show-ref --verify --quiet refs/heads/Release; then
             git checkout Release
@@ -73,18 +67,30 @@ jobs:
             git checkout -b Release
           fi
 
-      - name: Merge Dev into Release
+      - name: 🔁 Merge Dev into Release
         run: |
           git merge Dev --no-ff -m "Merge Dev into Release with updated webhook URLs"
 
-      - name: Commit and push updated webhooks
+      - name: 💾 Commit and push updated webhooks
         run: |
           git add $WEBHOOKS_DIR/*.json
-          git commit -m "Updated webhook URLs from environment variables" || echo "No webhook updates"
+          git commit -m "Updated webhook URLs for project ${PROJECT_ID}" || echo "No webhook updates"
           git push origin Release
 
-      - name: Create and push tag
+      - name: 🏷️ Generate and push next version tag
+        id: tag
         run: |
-          TAG=${{ github.event.inputs.tag }}
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
+          echo "🔢 Generating next tag version..."
+          LATEST_TAG=$(git tag --list "Cloud-Function-v*" --sort=-v:refname | head -n1)
+          if [ -z "$LATEST_TAG" ]; then
+            NEXT_VERSION=1
+          else
+            NUM=$(echo "$LATEST_TAG" | sed 's/Cloud-Function-v//')
+            NEXT_VERSION=$((NUM + 1))
+          fi
+          VERSION="Cloud-Function-v$NEXT_VERSION"
+          echo "🏷 Pushing new version tag: $VERSION"
+          git tag "$VERSION"
+          git push origin "$VERSION"
+          echo "✅ Release branch updated and tag $VERSION pushed successfully!"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
