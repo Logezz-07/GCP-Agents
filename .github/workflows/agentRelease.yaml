@@ -10,21 +10,24 @@ jobs:
 
     env:
       WEBHOOKS_DIR: "webhooks"
-      PROJECT_ID: ${{ vars.PROJECT_ID }}  
-      REGION: "us-central1"               
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      REGION: "us-central1"
 
     steps:
-      - name: Checkout repository
+      # 1️⃣ Checkout Dev branch
+      - name: Checkout Dev branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           ref: Dev
+          fetch-depth: 0
 
+      # 2️⃣ Configure Git
       - name: Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
+      # 3️⃣ Update Webhook URLs
       - name: Update Webhook URLs
         run: |
           echo "🔍 Checking and updating webhook URLs..."
@@ -50,25 +53,21 @@ jobs:
             exit 1
           fi
 
-      - name: Checkout Release branch
+      # 4️⃣ Force update Release branch from Dev (no merge conflicts)
+      - name: Update Release branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if git show-ref --verify --quiet refs/heads/Release; then
-            git checkout Release
-          else
-            git checkout -b Release
-          fi
-
-      - name: Merge Dev into Release
-        run: |
-          git merge Dev --no-ff -m "Merge Dev into Release with updated webhook URLs"
-
-      - name: Commit and push updated webhooks
-        run: |
+          echo "🚀 Syncing Release branch with Dev..."
+          git fetch origin Dev --tags
+          git checkout -B Release origin/Dev
           git add $WEBHOOKS_DIR/*.json
           git commit -m "Updated webhook URLs for project ${PROJECT_ID}" || echo "No webhook updates"
-          git push origin Release
+          git push origin Release --force
+          echo "✅ Release branch updated successfully."
 
-      - name:  Generate and push next version tag
+      # 5️⃣ Generate and push next version tag
+      - name: Generate and push next version tag
         id: tag
         run: |
           echo "🔢 Generating next tag version..."
@@ -83,5 +82,5 @@ jobs:
           echo "🏷 Pushing new version tag: $VERSION"
           git tag "$VERSION"
           git push origin "$VERSION"
-          echo "✅ Release branch updated and tag $VERSION pushed successfully!"
+          echo "✅ Tag $VERSION pushed successfully!"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
