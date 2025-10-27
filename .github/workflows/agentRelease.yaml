@@ -11,7 +11,7 @@ jobs:
     env:
       WEBHOOKS_DIR: "webhooks"
       PROJECT_ID: ${{ vars.PROJECT_ID }}
-      REGION: "us-central1"
+      REGION: ${{ vars.REGION }}
 
     steps:
       # 1️⃣ Checkout Dev branch
