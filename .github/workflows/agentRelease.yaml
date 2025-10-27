@@ -35,7 +35,8 @@ jobs:
           
           for file in $WEBHOOKS_DIR/*.json; do
             filename=$(basename "$file" .json)
-            env_var_value=$(printenv "$(echo "$filename" | tr '[:lower:]' '[:upper:]')" || true)
+            env_key=$(echo "$filename" | tr '-' '_' | tr ' ' '_' | tr '[:lower:]' '[:upper:]')
+            env_var_value=$(printenv "$env_key" || true)
 
             if [ -z "$env_var_value" ]; then
               echo "❌ Missing production webhook url for $filename"
