@@ -12,19 +12,57 @@ jobs:
   release:
     runs-on: ubuntu-latest
 
+    env:
+      WEBHOOKS_DIR: "webhooks"  # your webhook JSON folder
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # needed for tags and merging
-          ref: Dev         # always start from Dev branch
+          fetch-depth: 0
+          ref: Dev
 
       - name: Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Checkout Release branch
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Update Webhook URLs
+        run: |
+          echo "🔍 Checking and updating webhook URLs..."
+          any_missing=false
+          
+          for file in $WEBHOOKS_DIR/*.json; do
+            filename=$(basename "$file" .json)
+            env_var_value=$(printenv "$filename" || true)
+
+            if [ -z "$env_var_value" ]; then
+              echo "❌ Missing environment variable for $filename"
+              any_missing=true
+            else
+              echo "✅ Found env for $filename = $env_var_value"
+              jq --arg url "$env_var_value" '.genericWebService.url = $url' "$file" > tmp.json && mv tmp.json "$file"
+            fi
+          done
+          
+          if [ "$any_missing" = true ]; then
+            echo "🚫 One or more environment variables are missing. Exiting."
+            exit 1
+          fi
+
+      - name: Show updated webhook URLs
+        run: |
+          echo "🔎 Updated webhook URLs:"
+          for file in $WEBHOOKS_DIR/*.json; do
+            filename=$(basename "$file" .json)
+            url=$(jq -r '.genericWebService.url' "$file")
+            echo "→ $filename : $url"
+          done
+
+      - name: Checkout or create Release branch
         run: |
           if git show-ref --verify --quiet refs/heads/Release; then
             git checkout Release
@@ -34,8 +72,12 @@ jobs:
 
       - name: Merge Dev into Release
         run: |
-          git checkout Release
-          git merge Dev --no-ff -m "Merge Dev into Release"
+          git merge Dev --no-ff -m "Merge Dev into Release with updated webhook URLs"
+
+      - name: Commit and push updated webhooks
+        run: |
+          git add $WEBHOOKS_DIR/*.json
+          git commit -m "Updated webhook URLs from environment variables" || echo "No webhook updates"
           git push origin Release
 
       - name: Create and push tag
