@@ -63,7 +63,7 @@ jobs:
           git checkout -B release origin/Dev
           git add $WEBHOOKS_DIR/*.json
           git commit -m "Updated webhook URLs for project ${PROJECT_ID}" || echo "No webhook updates"
-          git push origin Release
+          git push origin release
           echo "✅ Release branch updated successfully."
 
       # 5️⃣ Generate and push next version tag
