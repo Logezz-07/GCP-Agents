@@ -39,6 +39,7 @@ jobs:
             env_var_value=$(printenv "$env_key" || true)
             
             echo "🔹 File: $filename → ENV: $env_key"
+            echo "🧩 Value from printenv: $env_var_value"
 
             if [ -z "$env_var_value" ]; then
               echo "❌ Missing production webhook url for $filename"
