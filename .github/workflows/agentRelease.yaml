@@ -59,7 +59,7 @@ jobs:
             echo "→ $filename : $url"
           done
 
-      - name: 🌿 Checkout or create Release branch
+      - name: 🌿 Checkout Release branch
         run: |
           if git show-ref --verify --quiet refs/heads/Release; then
             git checkout Release
@@ -81,14 +81,14 @@ jobs:
         id: tag
         run: |
           echo "🔢 Generating next tag version..."
-          LATEST_TAG=$(git tag --list "Cloud-Function-v*" --sort=-v:refname | head -n1)
+          LATEST_TAG=$(git tag --list "GDF-Agent-v*" --sort=-v:refname | head -n1)
           if [ -z "$LATEST_TAG" ]; then
             NEXT_VERSION=1
           else
-            NUM=$(echo "$LATEST_TAG" | sed 's/Cloud-Function-v//')
+            NUM=$(echo "$LATEST_TAG" | sed 's/GDF-Agent-v//')
             NEXT_VERSION=$((NUM + 1))
           fi
-          VERSION="Cloud-Function-v$NEXT_VERSION"
+          VERSION="GDF-Agent-v$NEXT_VERSION"
           echo "🏷 Pushing new version tag: $VERSION"
           git tag "$VERSION"
           git push origin "$VERSION"
