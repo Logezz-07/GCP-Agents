@@ -9,7 +9,9 @@
   
   },
   "startFlow": "Default Start Flow",
+  "enableStackdriverLogging": true,
   "advancedSettings": {
+    "enabled": true,
     "audioExportGcsDestination": {
     
     },
@@ -17,21 +19,28 @@
       "endpointerSensitivity": 90,
       "noSpeechTimeout": {
         "seconds": 5
-      }
+      },
+      "models": [ {
+        "key": "en",
+        "value": "telephony"
+      } ]
     },
     "playbackInterruptionSettings": {
-    
+      "allowPlaybackInterruption": true
     },
     "dtmfSettings": {
       "enabled": true,
+      "finishDigit": "#",
       "interdigitTimeoutDuration": {
         "seconds": 5
       },
       "endpointingTimeoutDuration": {
         "seconds": 5
-      }
+      },
+      "disableSpeechDetection": true
     },
     "loggingSettings": {
+      "enableStackdriverLogging": true,
       "enableInteractionLogging": true
     },
     "speechAdaptationSettings": {
@@ -40,6 +49,19 @@
   },
   "speakerIdSettings": {
   
+  },
+  "textToSpeechSettings": {
+    "synthesizeSpeechConfigs": [ {
+      "key": "en",
+      "value": {
+        "speakingRate": 1,
+        "pitch": 2,
+        "voice": {
+          "name": "en-US-Neural2-F",
+          "ssmlGender": "SSML_VOICE_GENDER_FEMALE"
+        }
+      }
+    } ]
   },
   "duplexSettings": {
   

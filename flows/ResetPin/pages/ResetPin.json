@@ -7,20 +7,23 @@
   "entryFulfillment": {
     "messages": [ {
       "text": {
-        "text": [ "Okay, I believe this is related to a PIN change. We've sent you an SMS with a link  please visit it to reset your PIN." ]
+        "text": [ "Okay, I believe this is related to a PIN change. We've sent you an SMS with a link  lease enter your otp ?" ]
       },
       "languageCode": "en"
     } ]
   },
   "transitionRoutes": [ {
-    "condition": "true",
+    "intent": "AccountNumberCollection",
     "triggerFulfillment": {
       "setParameterActions": [ {
         "parameter": "ExitType",
         "value": "Agent"
+      }, {
+        "parameter": "Ani",
+        "value": "OTP"
       } ]
     },
-    "targetFlow": "Default Start Flow",
+    "targetPage": "End Session",
     "name": "aa4e8078-62e1-4236-813c-e39151db6928"
   } ]
 }

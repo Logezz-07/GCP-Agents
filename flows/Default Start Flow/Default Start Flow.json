@@ -69,11 +69,9 @@
     },
     "name": "95aaf7aa-c34b-4ab7-9da0-14eec5671df8"
   }, {
-    "targetPage": "Call-Start-Params",
+    "targetPage": "NLU",
     "event": "Start",
     "triggerFulfillment": {
-      "webhook": "Webhook-Standard-Test-V2",
-      "tag": "callStartApi",
       "setParameterActions": [ {
         "parameter": "Ani",
         "value": "1010000061"
@@ -86,6 +84,9 @@
       }, {
         "parameter": "tries",
         "value": 0
+      }, {
+        "parameter": "session id",
+        "value": "$request.session-id"
       } ]
     },
     "name": "3ec54e3f-9147-4138-8ec9-877b7e9392b7"

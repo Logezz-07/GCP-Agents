@@ -7,20 +7,23 @@
   "entryFulfillment": {
     "messages": [ {
       "text": {
-        "text": [ "Okay, i believe it is related to technical support" ]
+        "text": [ "Okay, i believe it is related to technical support . let me know your query ?" ]
       },
       "languageCode": "en"
     } ]
   },
   "transitionRoutes": [ {
-    "condition": "True",
+    "intent": "ResetPin",
     "triggerFulfillment": {
       "setParameterActions": [ {
         "parameter": "ExitType",
         "value": "Agent"
+      }, {
+        "parameter": "Ani",
+        "value": "ResetPin"
       } ]
     },
-    "targetFlow": "Default Start Flow",
+    "targetFlow": "ResetPin",
     "name": "4b782d50-6544-403d-9d1e-c7d0b3209e1d"
   } ]
 }

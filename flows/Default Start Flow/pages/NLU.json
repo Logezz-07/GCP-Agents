@@ -14,6 +14,9 @@
     "setParameterActions": [ {
       "parameter": "tries",
       "value": 0
+    }, {
+      "parameter": "Ani",
+      "value": "fullfilamant"
     } ]
   },
   "transitionRoutes": [ {
@@ -26,7 +29,10 @@
   }, {
     "intent": "TechSupport",
     "triggerFulfillment": {
-    
+      "setParameterActions": [ {
+        "parameter": "Ani",
+        "value": "test"
+      } ]
     },
     "targetFlow": "TechSupport",
     "name": "ec4451d4-766b-46ae-8d23-4a3223d1da6f"

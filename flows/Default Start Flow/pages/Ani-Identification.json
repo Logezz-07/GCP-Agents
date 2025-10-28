@@ -5,8 +5,7 @@
   
   },
   "entryFulfillment": {
-    "webhook": "Webhook-Standard-Test-V2",
-    "tag": "AniIdentification"
+  
   },
   "transitionRoutes": [ {
     "condition": "$session.params.identifiedCustomer = true",
