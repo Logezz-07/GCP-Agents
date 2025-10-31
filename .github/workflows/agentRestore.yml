@@ -1,16 +1,30 @@
-name: Build and Restore Dialogflow CX Agent
+name: Restore Dialogflow CX Agent
 
 on:
   workflow_dispatch:
     inputs:
       git_tag:
-        description: 'Tag to checkout'
+        description: "Tag to checkout"
         required: true
-        default: ''
+      environment:
+        description: "Select environment to restore"
+        required: true
+        default: "Dev"
+        type: choice
+        options:
+          - Dev
+          - Prod
 
 jobs:
   build-and-restore:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    env:
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      REGION: ${{ vars.REGION }}
+      AGENT_ID: ${{ vars.AGENT_ID }}
+
     steps:
       # 1️⃣ Checkout repo
       - name: Checkout repo
@@ -18,8 +32,8 @@ jobs:
         with:
           ref: ${{ github.event.inputs.git_tag }}
 
-      # 2️⃣ Authenticate to GCP (Dev/Prod credentials)
-      - name: Auth to GCP (Prod)
+      # 2️⃣ Authenticate to GCP
+      - name: Auth to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
@@ -32,21 +46,22 @@ jobs:
           sudo mv cxcli /usr/local/bin/
           cxcli version
 
-      # 4️⃣ Zip the agent files from repo structure
+      # 4️⃣ Build agent zip (include all files except .github/workflows)
       - name: Build agent zip
         run: |
-          echo "Building agent.zip from repo structure..."
-          zip -r agent.zip agent.json flows intents entityTypes webhooks generativeSettings
+          echo "📦 Building agent.zip (excluding .github/workflows)..."
+          zip -r agent.zip . -x ".github/workflows/*"
+          echo "✅ agent.zip created successfully:"
           ls -lh agent.zip
 
-      # 5️⃣ Restore agent to Prod
+      # 5️⃣ Restore Dialogflow CX Agent
       - name: Restore Dialogflow CX Agent
         run: |
-          PROD_AGENT_ID="RogersFlow"
-          echo "Restoring agent to Prod: $PROD_AGENT_ID"
-          cxcli agent restore "$PROD_AGENT_ID" \
-            --project-id "roger-470808" \
-            --location-id "us-central1" \
+          echo "🚀 Restoring agent to ${{ github.event.inputs.environment }} environment"
+          echo "📍 PROJECT_ID=${PROJECT_ID}, REGION=${REGION}, AGENT_ID=${AGENT_ID}"
+          cxcli agent restore "$AGENT_ID" \
+            --project-id "$PROJECT_ID" \
+            --location-id "$REGION" \
             --input agent.zip \
             --output-format json \
             --verbose
