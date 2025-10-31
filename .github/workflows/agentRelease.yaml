@@ -1,17 +1,27 @@
-name: Release from Dev
+name: Agent Release
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select environment to release"
+        required: true
+        default: "Dev"
+        type: choice
+        options:
+          - Dev
+          - Prod
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ github.event.inputs.environment }}
 
     env:
       WEBHOOKS_DIR: "webhooks"
       PROJECT_ID: ${{ vars.PROJECT_ID }}
       REGION: ${{ vars.REGION }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
 
     steps:
       # 1️⃣ Checkout Dev branch
@@ -32,13 +42,13 @@ jobs:
         run: |
           echo "🔍 Checking and updating webhook URLs..."
           any_missing=false
-          
+
           for file in $WEBHOOKS_DIR/*.json; do
             filename=$(basename "$file" .json)
             function_name=$(echo "$filename" | tr '[:upper:]' '[:lower:]')
-            
+
             webhook_url="https://${REGION}-${PROJECT_ID}.cloudfunctions.net/${function_name}"
-            
+
             if [ -z "$PROJECT_ID" ]; then
               echo "❌ Missing PROJECT_ID environment variable!"
               any_missing=true
@@ -47,14 +57,14 @@ jobs:
               jq --arg url "$webhook_url" '.genericWebService.uri = $url' "$file" > tmp.json && mv tmp.json "$file"
             fi
           done
-          
+
           if [ "$any_missing" = true ]; then
             echo "🚫 Missing required environment variables. Exiting."
             exit 1
           fi
 
-      # 4️⃣ Force update Release branch from Dev (no merge conflicts)
-      - name: Update Release branch
+      # 4️⃣ Sync Release branch with Dev
+      - name: Sync Release branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -62,7 +72,7 @@ jobs:
           git fetch origin Dev --tags
           git checkout -B release origin/Dev
           git add $WEBHOOKS_DIR/*.json
-          git commit -m "Updated webhook URLs for project ${PROJECT_ID}" || echo "No webhook updates"
+          git commit -m "Updated webhook URLs for ${ENVIRONMENT} project ${PROJECT_ID}" || echo "No webhook updates"
           git push origin release
           echo "✅ Release branch updated successfully."
 
