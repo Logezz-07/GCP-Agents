@@ -1,34 +1,28 @@
-name: Release Dialogflow CX Agent
+name: GDF-Agent Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Select environment to release"
-        required: true
-        default: "Dev"
-        type: choice
-        options:
-          - Dev
-          - Prod
+  push:
+    branches:
+      - Dev
+      - QA
+      - Prod
 
 jobs:
-  release:
+  Release-Agent:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
+    environment: ${{ github.ref_name }}
 
     env:
       WEBHOOKS_DIR: "webhooks"
       PROJECT_ID: ${{ vars.PROJECT_ID }}
       REGION: ${{ vars.REGION }}
-      ENVIRONMENT: ${{ github.event.inputs.environment }}
+      ENVIRONMENT: ${{ github.ref_name }}
 
     steps:
-      # 1️⃣ Checkout Dev branch
-      - name: Checkout Dev branch
+      # 1️⃣ Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: Dev
           fetch-depth: 0
 
       # 2️⃣ Configure Git
@@ -37,16 +31,15 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      # 3️⃣ Update Webhook URLs
+      # 3️⃣ Update Webhook URLs based on environment
       - name: Update Webhook URLs
         run: |
-          echo "🔍 Checking and updating webhook URLs..."
+          echo "🔍 Checking and updating webhook URLs for environment: ${ENVIRONMENT}..."
           any_missing=false
 
           for file in $WEBHOOKS_DIR/*.json; do
             filename=$(basename "$file" .json)
             function_name=$(echo "$filename" | tr '[:upper:]' '[:lower:]')
-
             webhook_url="https://${REGION}-${PROJECT_ID}.cloudfunctions.net/${function_name}"
 
             if [ -z "$PROJECT_ID" ]; then
@@ -63,34 +56,56 @@ jobs:
             exit 1
           fi
 
-      # 4️⃣ Sync Release branch with Dev
-      - name: Sync Release branch
+      # 4️⃣ Commit and push updated webhook URLs
+      - name: Commit and Push Updates
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🚀 Syncing Release branch with Dev..."
-          git fetch origin Dev --tags
-          git checkout -B release origin/Dev
+          echo "🚀 Committing webhook updates for ${ENVIRONMENT}..."
+          git fetch origin ${ENVIRONMENT} --tags
+          git checkout ${ENVIRONMENT}
           git add $WEBHOOKS_DIR/*.json
-          git commit -m "Updated webhook URLs for ${ENVIRONMENT} project ${PROJECT_ID}" || echo "No webhook updates"
-          git push origin release
-          echo "✅ Release branch updated successfully."
+          git commit -m "Updated webhook URLs for ${ENVIRONMENT} (${PROJECT_ID})" || echo "No changes to commit"
+          git push origin ${ENVIRONMENT}
+          echo "✅ Webhook updates pushed successfully."
 
-      # 5️⃣ Generate and push next version tag
-      - name: Generate and push next version tag
-        id: tag
+      # 5️⃣ Determine tag prefix based on branch (Dev, QA, Prod)
+      - name: Set Tag Prefix
+        id: prefix
         run: |
-          echo "🔢 Generating next tag version..."
-          LATEST_TAG=$(git tag --list "GDF-Agent-v*" --sort=-v:refname | head -n1)
-          if [ -z "$LATEST_TAG" ]; then
-            NEXT_VERSION=1
+          BRANCH_NAME=${GITHUB_REF##*/}
+          if [ "$BRANCH_NAME" == "Dev" ]; then
+            echo "prefix=GDF-Dev" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH_NAME" == "QA" ]; then
+            echo "prefix=GDF-QA" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH_NAME" == "Prod" ]; then
+            echo "prefix=GDF-Prod" >> $GITHUB_OUTPUT
           else
-            NUM=$(echo "$LATEST_TAG" | sed 's/GDF-Agent-v//')
-            NEXT_VERSION=$((NUM + 1))
+            echo "Unknown branch, skipping tag"
+            exit 1
           fi
-          VERSION="GDF-Agent-v$NEXT_VERSION"
-          echo "🏷 Pushing new version tag: $VERSION"
-          git tag "$VERSION"
-          git push origin "$VERSION"
-          echo "✅ Tag $VERSION pushed successfully!"
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      # 6️⃣ Generate next tag version
+      - name: Generate Next Tag
+        id: version
+        run: |
+          PREFIX=${{ steps.prefix.outputs.prefix }}
+          LAST_TAG=$(git tag --list "${PREFIX}-v*" | sort -V | tail -n 1)
+          echo "Last Tag: $LAST_TAG"
+          if [ -z "$LAST_TAG" ]; then
+            NEXT_VERSION="${PREFIX}-v1"
+          else
+            VERSION_NUM=$(echo $LAST_TAG | grep -oE '[0-9]+$')
+            NEXT_VERSION="${PREFIX}-v$((VERSION_NUM + 1))"
+          fi
+          echo "Next Version: $NEXT_VERSION"
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      # 7️⃣ Create and push version tag
+      - name: Create and Push Tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+          echo "🏷 Tag pushed: ${{ steps.version.outputs.version }}"
