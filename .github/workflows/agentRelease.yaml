@@ -1,4 +1,4 @@
-name: GDF-Agent Release
+name: GDF-Agent Auto Tagging
 
 on:
   push:
