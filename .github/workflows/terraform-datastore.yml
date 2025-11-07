@@ -39,12 +39,12 @@ jobs:
 
       - name: Terraform Init
         run: |
-          cd infra/datastore
+          cd teraform
           terraform init -input=false
 
       - name: Terraform Apply
         run: |
-          cd infra/datastore
+          cd teraform
           terraform apply -auto-approve \
             -var="project_id=${PROJECT_ID}" \
             -var="region=${REGION}" \
@@ -53,6 +53,6 @@ jobs:
 
       - name: Output Data Store Reference
         run: |
-          cd infra/datastore
+          cd teraform
           echo "📦 Data Store Reference:"
           terraform output -raw data_store_reference
