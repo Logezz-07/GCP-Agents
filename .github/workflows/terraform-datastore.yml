@@ -1,0 +1,58 @@
+name: Create Vertex AI Datastore and Link to CX Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select environment"
+        required: true
+        type: choice
+        options:
+          - Dev
+          - QA
+          - Prod
+
+jobs:
+  create-datastore:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    env:
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      REGION: ${{ vars.REGION }}
+      BUCKET_NAME: "r4b-playbook-datastore"
+      AGENT_ID: ${{ vars.AGENT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Terraform Init
+        run: |
+          cd infra/datastore
+          terraform init -input=false
+
+      - name: Terraform Apply
+        run: |
+          cd infra/datastore
+          terraform apply -auto-approve \
+            -var="project_id=${PROJECT_ID}" \
+            -var="region=${REGION}" \
+            -var="bucket_name=${BUCKET_NAME}" \
+            -var="agent_id=${AGENT_ID}"
+
+      - name: Output Data Store Reference
+        run: |
+          cd infra/datastore
+          echo "📦 Data Store Reference:"
+          terraform output -raw data_store_reference
