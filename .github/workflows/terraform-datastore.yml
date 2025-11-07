@@ -24,35 +24,41 @@ jobs:
       AGENT_ID: ${{ vars.AGENT_ID }}
 
     steps:
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
 
+      # 2️⃣ Authenticate to Google Cloud
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      # 3️⃣ Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
+      # 4️⃣ Terraform Init
       - name: Terraform Init
-        run: |
-          cd teraform
-          terraform init -input=false
+        working-directory: teraform
+        run: terraform init -input=false
 
+      # 5️⃣ Terraform Validate (Optional but good practice)
+      - name: Terraform Validate
+        working-directory: teraform
+        run: terraform validate
+
+      # 6️⃣ Terraform Apply
       - name: Terraform Apply
+        working-directory: teraform
         run: |
-          cd teraform
           terraform apply -auto-approve \
             -var="project_id=${PROJECT_ID}" \
             -var="region=${REGION}" \
             -var="bucket_name=${BUCKET_NAME}" \
             -var="agent_id=${AGENT_ID}"
-
-      - name: Output Data Store Reference
-        run: |
-          cd teraform
-          echo "📦 Data Store Reference:"
-          terraform output -raw data_store_reference
