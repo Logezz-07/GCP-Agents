@@ -66,6 +66,5 @@ jobs:
             --project-id "$PROJECT_ID" \
             --location-id "$REGION" \
             --input agent.zip \
-            --enable-default-settings \
             --output-format json \
             --verbose
