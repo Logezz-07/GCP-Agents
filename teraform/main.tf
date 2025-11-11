@@ -11,13 +11,12 @@ terraform {
 provider "google" {
   project     = var.project_id
   region      = var.region
-  credentials = file("C:/Users/logeshwaran.b/OneDrive - Servion Global Solution Private Limited/Desktop/R4B/CloudFunctions/ServiceAccount-SecretKeys.json")
-}
+  }
 
 data "google_project" "project" {}
 
 
-# ─────────────────────────────────────────────
+
 resource "google_dialogflow_cx_agent" "agent" {
   display_name              = var.agent_display_name
   location                  = var.dialogflow_region
@@ -38,7 +37,7 @@ resource "google_dialogflow_cx_tool" "data_store_tool" {
 
   data_store_spec {
     data_store_connections {
-      data_store_type          = "STRUCTURED"
+      data_store_type          = "UNSTRUCTURED"
       # 👇 Reference your existing Data Store (already created in GCP)
       data_store               = "projects/${data.google_project.project.number}/locations/us/collections/default_collection/dataStores/${var.existing_data_store_id}"
       document_processing_mode = "DOCUMENTS"
