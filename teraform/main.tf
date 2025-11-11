@@ -5,67 +5,61 @@ terraform {
       version = "~> 6.0"
     }
   }
+  required_version = ">= 1.6.0"
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project     = var.project_id
+  region      = var.region
+  credentials = file("C:/Users/logeshwaran.b/OneDrive - Servion Global Solution Private Limited/Desktop/R4B/CloudFunctions/ServiceAccount-SecretKeys.json")
 }
 
-# Fetch current project details
 data "google_project" "project" {}
 
-# 1️⃣ Enable Vertex AI Search API
-resource "google_project_service" "discoveryengine" {
-  service = "discoveryengine.googleapis.com"
+
+# ─────────────────────────────────────────────
+resource "google_dialogflow_cx_agent" "agent" {
+  display_name              = var.agent_display_name
+  location                  = var.dialogflow_region
+  default_language_code     = "en"
+  time_zone                 = "America/New_York"
+  description               = "CX Agent automatically linked to Vertex AI Search Data Store"
+  delete_chat_engine_on_destroy = false
 }
 
-# 2️⃣ Create Vertex AI Data Store (linked to your GCS PDF)
-resource "google_discovery_engine_data_store" "cx_datastore" {
-  location          = var.region
-  data_store_id     = "cx-agent-datastore"
-  display_name      = "CX Knowledge Datastore"
-  industry_vertical = "GENERIC"
-  content_config    = "NO_CONTENT"
-  solution_types    = ["SOLUTION_TYPE_CHAT"]
-}
+# ─────────────────────────────────────────────
+# 2️⃣ Create a Dialogflow CX Tool referencing existing Vertex AI Data Store
+# ─────────────────────────────────────────────
+resource "google_dialogflow_cx_tool" "data_store_tool" {
+  # Use the agent created above
+  parent       = google_dialogflow_cx_agent.agent.id
+  display_name = var.tool_display_name
+  description  = "Tool referencing existing Vertex AI Search Data Store"
 
-# 3️⃣ Link GCS PDF (ingestion trigger)
-resource "google_discovery_engine_document" "pdf_document" {
-  project       = var.project_id
-  location      = var.region
-  data_store_id = google_discovery_engine_data_store.cx_datastore.data_store_id
-  document_id   = "playbook-pdf"
-
-  content {
-    gcs_uri = "gs://${var.bucket_name}/DataStore.pdf"
-  }
-
-  title          = "R4B Playbook"
-  content_type   = "CONTENT_TYPE_UNSPECIFIED"
-}
-
-# 4️⃣ Create CX Tool reference linking Agent <-> Data Store
-resource "google_dialogflow_cx_tool" "datastore_link" {
-  parent       = "projects/${var.project_id}/locations/${var.region}/agents/${var.agent_id}"
-  display_name = "R4B Datastore Tool"
-  description  = "Auto-linked Vertex AI Search data store for Dialogflow CX"
-  
   data_store_spec {
     data_store_connections {
-      data_store_type            = "UNSTRUCTURED"
-      data_store                 = "projects/${data.google_project.project.number}/locations/${var.region}/collections/default_collection/dataStores/${google_discovery_engine_data_store.cx_datastore.data_store_id}"
-      document_processing_mode   = "DOCUMENTS"
+      data_store_type          = "STRUCTURED"
+      # 👇 Reference your existing Data Store (already created in GCP)
+      data_store               = "projects/${data.google_project.project.number}/locations/us/collections/default_collection/dataStores/${var.existing_data_store_id}"
+      document_processing_mode = "DOCUMENTS"
     }
     fallback_prompt {}
   }
 
   depends_on = [
-    google_discovery_engine_data_store.cx_datastore,
-    google_discovery_engine_document.pdf_document
+    google_dialogflow_cx_agent.agent
   ]
 }
 
-output "data_store_reference" {
-  value = google_discovery_engine_data_store.cx_datastore.id
+# ─────────────────────────────────────────────
+# 3️⃣ Outputs
+# ─────────────────────────────────────────────
+output "agent_name" {
+  description = "Dialogflow CX Agent full resource path"
+  value       = google_dialogflow_cx_agent.agent.id
+}
+
+output "tool_name" {
+  description = "Dialogflow CX Tool resource path"
+  value       = google_dialogflow_cx_tool.data_store_tool.name
 }
