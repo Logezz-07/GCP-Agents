@@ -80,6 +80,7 @@ jobs:
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "🧪 Dry Run mode — Terraform plan only, no apply."
             terraform plan -lock=false -input=false $TF_VARS
+            exit 0
           else
             echo "☁️ Apply mode — generating plan."
             terraform plan -out=tfplan.out -lock=true -input=false $TF_VARS
