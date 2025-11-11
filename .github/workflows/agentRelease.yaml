@@ -13,9 +13,9 @@ jobs:
     environment: ${{ github.ref_name }}
 
     env:
-      WEBHOOKS_DIR: "webhooks"
       PROJECT_ID: ${{ vars.PROJECT_ID }}
       REGION: ${{ vars.REGION }}
+      DATASTORE_ID: ${{ vars.DATASTORE_ID }}
       ENVIRONMENT: ${{ github.ref_name }}
 
     steps:
@@ -31,13 +31,20 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      # 3️⃣ Update Webhook URLs based on environment
+      # 3️⃣ Update Webhook URLs (only if folder exists)
       - name: Update Webhook URLs
         run: |
-          echo "🔍 Checking and updating webhook URLs for environment: ${ENVIRONMENT}..."
+          echo "🔍 Checking for 'webhooks' folder..."
+          if [ ! -d "webhooks" ]; then
+            echo "⚠️ No 'webhooks' folder found — skipping webhook updates."
+            exit 0
+          fi
+
+          echo "🔍 Updating webhook URLs for environment: ${ENVIRONMENT}..."
           any_missing=false
 
-          for file in $WEBHOOKS_DIR/*.json; do
+          for file in webhooks/*.json; do
+            [ -f "$file" ] || continue
             filename=$(basename "$file" .json)
             function_name=$(echo "$filename" | tr '[:upper:]' '[:lower:]')
             webhook_url="https://${REGION}-${PROJECT_ID}.cloudfunctions.net/${function_name}"
@@ -56,20 +63,51 @@ jobs:
             exit 1
           fi
 
-      # 4️⃣ Commit and push updated webhook URLs
+      # 4️⃣ Update Tool DataStore Config (repo-level check)
+      - name: Update Tool DataStore Config
+        run: |
+          echo "🧩 Checking for 'tools' folder..."
+          if [ ! -d "tools" ]; then
+            echo "⚠️ No 'tools' folder found — skipping DataStore updates."
+            exit 0
+          fi
+
+          TOOL_FILES=$(find "tools" -type f -path "tools/R4B-DS*/" -name "*.json" 2>/dev/null || true)
+          if [ -z "$TOOL_FILES" ]; then
+            echo "ℹ️ No 'R4B-DS' JSON files found — skipping DataStore updates."
+            exit 0
+          fi
+
+          echo "🧩 Updating DataStore references inside R4B-DS folders..."
+          for file in $TOOL_FILES; do
+            echo "🔧 Processing: $file"
+            jq --arg pid "$PROJECT_ID" --arg dsid "$DATASTORE_ID" \
+              '.dataStoreSpec.dataStoreConnections[0].dataStore =
+               "projects/\($pid)/locations/us/collections/default_collection/dataStores/\($dsid)"' \
+              "$file" > tmp.json && mv tmp.json "$file"
+            echo "✅ Updated dataStore → $DATASTORE_ID"
+          done
+
+      # 5️⃣ Commit and push updates
       - name: Commit and Push Updates
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🚀 Committing webhook updates for ${ENVIRONMENT}..."
+          echo "🚀 Committing webhook and datastore updates for ${ENVIRONMENT}..."
           git fetch origin ${ENVIRONMENT} --tags
           git checkout ${ENVIRONMENT}
-          git add $WEBHOOKS_DIR/*.json
-          git commit -m "Updated webhook URLs for ${ENVIRONMENT} (${PROJECT_ID})" || echo "No changes to commit"
-          git push origin ${ENVIRONMENT}
-          echo "✅ Webhook updates pushed successfully."
 
-      # 5️⃣ Determine tag prefix based on branch (Dev, QA, Prod)
+          # Add only if files exist
+          [ -d "webhooks" ] && git add webhooks/*.json || echo "🟡 No webhooks folder to commit"
+          [ -d "tools" ] && git add tools/R4B-DS*/. -f 2>/dev/null || echo "🟡 No tools folder to commit"
+
+          git diff --cached --quiet && echo "🟢 No changes detected. Skipping commit." && exit 0
+
+          git commit -m "Updated webhooks & datastore config for ${ENVIRONMENT} (${PROJECT_ID})"
+          git push origin ${ENVIRONMENT}
+          echo "✅ Updates pushed successfully."
+
+      # 6️⃣ Determine tag prefix
       - name: Set Tag Prefix
         id: prefix
         run: |
@@ -85,7 +123,7 @@ jobs:
             exit 1
           fi
 
-      # 6️⃣ Generate next tag version
+      # 7️⃣ Generate next tag version
       - name: Generate Next Tag
         id: version
         run: |
@@ -101,7 +139,7 @@ jobs:
           echo "Next Version: $NEXT_VERSION"
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
 
-      # 7️⃣ Create and push version tag
+      # 8️⃣ Create and push version tag
       - name: Create and Push Tag
         run: |
           git config user.name "github-actions"
