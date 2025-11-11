@@ -120,7 +120,12 @@ jobs:
         if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
           echo "📦 Building agent.zip (excluding .github/workflows)..."
-          zip -r agent.zip . -x ".github/workflows/*"
+          zip -r agent.zip . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "tools/*" \
+            -x "teraform/*" \
+            -x "*.zip"
           echo "✅ agent.zip created successfully:"
           ls -lh agent.zip
 
