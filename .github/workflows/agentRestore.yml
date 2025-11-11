@@ -129,9 +129,9 @@ jobs:
         if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
           echo "🚀 Restoring Dialogflow CX Agent to ${{ github.event.inputs.environment }}"
-          echo "📍 PROJECT_ID=${PROJECT_ID}, REGION=${REGION}, AGENT_ID=${{ steps.extract.outputs.agent_id }}"
+          echo "📍 PROJECT_ID=${PROJECT_ID}, REGION=${REGION}, AGENT_ID=${AGENT_DISPLAY_NAME}"
 
-          cxcli agent restore "${{ steps.extract.outputs.agent_id }}" \
+          cxcli agent restore "${AGENT_DISPLAY_NAME}" \
             --project-id "${PROJECT_ID}" \
             --location-id "${REGION}" \
             --input agent.zip \
