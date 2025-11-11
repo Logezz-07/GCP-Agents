@@ -69,12 +69,12 @@ jobs:
         run: |
           echo "🧾 Running Terraform Plan for Dialogflow CX Agent + Tool setup..."
           TF_VARS="\
-            -var=\"project_id=${PROJECT_ID}\" \
-            -var=\"region=${REGION}\" \
-            -var=\"dialogflow_region=${DIALOGFLOW_REGION}\" \
-            -var=\"agent_display_name=${AGENT_DISPLAY_NAME}\" \
-            -var=\"tool_display_name=${TOOL_DISPLAY_NAME}\" \
-            -var=\"existing_data_store_id=${DATASTORE_ID}\" \
+            -var=project_id=${PROJECT_ID} \
+            -var=region=${REGION} \
+            -var=dialogflow_region=${DIALOGFLOW_REGION} \
+            -var=agent_display_name=${AGENT_DISPLAY_NAME} \
+            -var=tool_display_name=${TOOL_DISPLAY_NAME} \
+            -var=existing_data_store_id=${DATASTORE_ID} \
           "
 
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
