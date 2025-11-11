@@ -80,7 +80,6 @@ jobs:
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "🧪 Dry Run mode — Terraform plan only, no apply."
             terraform plan -lock=false -input=false $TF_VARS
-            exit 0
           else
             echo "☁️ Apply mode — generating plan."
             terraform plan -out=tfplan.out -lock=true -input=false $TF_VARS
@@ -96,6 +95,7 @@ jobs:
 
       # 7️⃣ Capture Terraform Outputs
       - name: Capture Terraform Outputs
+        if: ${{ github.event.inputs.dry_run == 'false' }}
         id: extract
         working-directory: teraform
         run: |
@@ -107,6 +107,7 @@ jobs:
 
       # 8️⃣ Install cxcli
       - name: Install cxcli
+        if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
           echo "⬇️ Installing cxcli..."
           curl -L -o cxcli.tar.gz https://github.com/xavidop/dialogflow-cx-cli/releases/download/v1.239.0/cxcli_Linux_x86_64.tar.gz
@@ -116,6 +117,7 @@ jobs:
 
       # 9️⃣ Build agent.zip (excluding workflows)
       - name: Build agent zip
+        if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
           echo "📦 Building agent.zip (excluding .github/workflows)..."
           zip -r agent.zip . -x ".github/workflows/*"
@@ -124,6 +126,7 @@ jobs:
 
       # 🔟 Restore Dialogflow CX Agent
       - name: Restore Dialogflow CX Agent
+        if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
           echo "🚀 Restoring Dialogflow CX Agent to ${{ github.event.inputs.environment }}"
           echo "📍 PROJECT_ID=${PROJECT_ID}, REGION=${REGION}, AGENT_ID=${{ steps.extract.outputs.agent_id }}"
