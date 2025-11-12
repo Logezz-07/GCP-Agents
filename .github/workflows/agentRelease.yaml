@@ -1,25 +1,22 @@
 name: GDF-Agent Auto Tagging
 
 on:
-  pull_request_target:
+  push:
     branches:
       - Dev
       - QA
       - Prod
-    types:
-      - closed
 
 jobs:
   Release-Agent:
-    if: github.event.pull_request.merged == true  # Only run if PR was merged
     runs-on: ubuntu-latest
-    environment: ${{ github.event.pull_request.base.ref }}
+    environment: ${{ github.ref_name }}
 
     env:
       WEBHOOKS_DIR: "webhooks"
       PROJECT_ID: ${{ vars.PROJECT_ID }}
       REGION: ${{ vars.REGION }}
-      ENVIRONMENT: ${{ github.event.pull_request.base.ref }}
+      ENVIRONMENT: ${{ github.ref_name }}
 
     steps:
       # 1️⃣ Checkout repository
@@ -33,18 +30,15 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-
       # 3️⃣ Update Webhook URLs based on environment
       - name: Update Webhook URLs
         run: |
           echo "🔍 Checking and updating webhook URLs for environment: ${ENVIRONMENT}..."
           any_missing=false
-
           for file in $WEBHOOKS_DIR/*.json; do
             filename=$(basename "$file" .json)
             function_name=$(echo "$filename" | tr '[:upper:]' '[:lower:]')
             webhook_url="https://${REGION}-${PROJECT_ID}.cloudfunctions.net/${function_name}"
-
             if [ -z "$PROJECT_ID" ]; then
               echo "❌ Missing PROJECT_ID environment variable!"
               any_missing=true
@@ -53,12 +47,10 @@ jobs:
               jq --arg url "$webhook_url" '.genericWebService.uri = $url' "$file" > tmp.json && mv tmp.json "$file"
             fi
           done
-
           if [ "$any_missing" = true ]; then
             echo "🚫 Missing required environment variables. Exiting."
             exit 1
           fi
-
       # 4️⃣ Commit and push updated webhook URLs
       - name: Commit and Push Updates
         env:
@@ -71,7 +63,6 @@ jobs:
           git commit -m "Updated webhook URLs for ${ENVIRONMENT} (${PROJECT_ID})" || echo "No changes to commit"
           git push origin ${ENVIRONMENT}
           echo "✅ Webhook updates pushed successfully."
-
       # 5️⃣ Determine tag prefix based on branch (Dev, QA, Prod)
       - name: Set Tag Prefix
         id: prefix
@@ -87,7 +78,6 @@ jobs:
             echo "Unknown branch, skipping tag"
             exit 1
           fi
-
       # 6️⃣ Generate next tag version
       - name: Generate Next Tag
         id: version
@@ -103,7 +93,6 @@ jobs:
           fi
           echo "Next Version: $NEXT_VERSION"
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
-
       # 7️⃣ Create and push version tag
       - name: Create and Push Tag
         run: |
