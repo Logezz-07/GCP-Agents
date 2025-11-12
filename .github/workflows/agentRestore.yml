@@ -76,10 +76,10 @@ jobs:
             -var=tool_display_name=${TOOL_DISPLAY_NAME} \
             -var=existing_data_store_id=${DATASTORE_ID} \
           "
-
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "🧪 Dry Run mode — Terraform plan only, no apply."
             terraform plan -lock=false -input=false $TF_VARS
+            exit 0
           else
             echo "☁️ Apply mode — generating plan."
             terraform plan -out=tfplan.out -lock=true -input=false $TF_VARS
@@ -93,7 +93,7 @@ jobs:
           echo "🚀 Applying Terraform configuration (Dialogflow CX Agent + Tool)..."
           terraform apply -auto-approve tfplan.out
 
-        # 7️⃣ Capture Terraform Outputs
+      # 7️⃣ Capture Terraform Outputs
       - name: Capture Terraform Outputs
         if: ${{ github.event.inputs.dry_run == 'false' }}
         id: extract
@@ -108,7 +108,7 @@ jobs:
           echo "✅ Captured Agent ID: $AGENT_ID"
           echo "✅ Captured Tool Name: $TOOL_NAME"
 
-      # 7️⃣.1 Update Tool JSONs (so restored agent includes correct datastore/tool reference)
+      # 7️⃣.1 Update Tool JSONs
       - name: Update Tool JSONs before restore
         if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
@@ -116,13 +116,11 @@ jobs:
           TOOLS_DIR="tools"
           TOOL_NAME=$(jq -r '.tool_name.value' teraform/tf-output.json)
           echo "📥 Loaded Tool Name from Terraform output: $TOOL_NAME"
-
           if [ -d "$TOOLS_DIR" ]; then
             for folder in $TOOLS_DIR/R4B-DS-*; do
               [ -d "$folder" ] || continue
               json_file=$(find "$folder" -maxdepth 1 -name "*.json" | head -n 1)
               [ -f "$json_file" ] || continue
-
               echo "🧩 Updating → $json_file"
               jq --arg tool_name "$TOOL_NAME" \
                  --arg project "$PROJECT_ID" \
@@ -131,14 +129,33 @@ jobs:
                  .name = $tool_name |
                  .dataStoreSpec.dataStoreConnections[0].dataStore = $datastore
                  ' "$json_file" > tmp.json && mv tmp.json "$json_file"
-
               echo "✅ Updated tool config: name=$TOOL_NAME, datastore=$DATASTORE_ID"
             done
           else
             echo "⚠️ No tools directory found. Skipping tool update."
           fi
 
-      # 8️⃣ Build agent.zip (INCLUDE updated tools folder)
+      # 7️⃣.2 Wait for Tool reflection
+      - name: Wait for Tool synchronization
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        run: |
+          echo "🕒 Waiting 25 seconds for Dialogflow Tool + DataStore propagation..."
+          sleep 25
+          echo "✅ Tool reflection complete."
+
+      # 8️⃣ Install cxcli globally
+      - name: Install cxcli globally
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        run: |
+          echo "⬇️ Installing cxcli globally..."
+          curl -L -o cxcli.tar.gz https://github.com/xavidop/dialogflow-cx-cli/releases/download/v1.239.0/cxcli_Linux_x86_64.tar.gz
+          tar -xzf cxcli.tar.gz
+          sudo mv cxcli /usr/local/bin/
+          echo "✅ cxcli installed successfully"
+          which cxcli
+          cxcli version
+
+      # 9️⃣ Build agent.zip (INCLUDE updated tools folder)
       - name: Build agent.zip (including tools)
         if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
@@ -151,13 +168,12 @@ jobs:
           echo "✅ agent.zip created successfully with tools included:"
           ls -lh agent.zip
 
-      # 9️⃣ Restore Dialogflow CX Agent
+      # 🔟 Restore Dialogflow CX Agent
       - name: Restore Dialogflow CX Agent
         if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
           echo "🚀 Restoring Dialogflow CX Agent to ${{ github.event.inputs.environment }}"
           echo "📍 PROJECT_ID=${PROJECT_ID}, REGION=${REGION}, AGENT_ID=${AGENT_DISPLAY_NAME}"
-
           cxcli agent restore "${AGENT_DISPLAY_NAME}" \
             --project-id "${PROJECT_ID}" \
             --location-id "${REGION}" \
