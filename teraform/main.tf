@@ -7,7 +7,6 @@ terraform {
       version = "~> 6.0"
     }
   }
-  
   required_version = ">= 1.6.0"
 
 }
@@ -30,9 +29,6 @@ resource "google_dialogflow_cx_agent" "agent" {
   delete_chat_engine_on_destroy = false
 }
 
-# ─────────────────────────────────────────────
-# 2️⃣ Create a Dialogflow CX Tool referencing existing Vertex AI Data Store
-# ─────────────────────────────────────────────
 resource "google_dialogflow_cx_tool" "data_store_tool" {
   # Use the agent created above
   parent       = google_dialogflow_cx_agent.agent.id
@@ -42,7 +38,6 @@ resource "google_dialogflow_cx_tool" "data_store_tool" {
   data_store_spec {
     data_store_connections {
       data_store_type          = "UNSTRUCTURED"
-      # 👇 Reference your existing Data Store (already created in GCP)
       data_store               = "projects/${data.google_project.project.number}/locations/us/collections/default_collection/dataStores/${var.existing_data_store_id}"
       document_processing_mode = "DOCUMENTS"
     }
@@ -54,9 +49,6 @@ resource "google_dialogflow_cx_tool" "data_store_tool" {
   ]
 }
 
-# ─────────────────────────────────────────────
-# 3️⃣ Outputs
-# ─────────────────────────────────────────────
 output "agent_name" {
   description = "Dialogflow CX Agent full resource path"
   value       = google_dialogflow_cx_agent.agent.id
