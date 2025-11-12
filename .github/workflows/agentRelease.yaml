@@ -1,22 +1,25 @@
 name: GDF-Agent Auto Tagging
 
 on:
-  push:
+  pull_request:
     branches:
       - Dev
       - QA
       - Prod
+    types:
+      - closed
 
 jobs:
   Release-Agent:
+    if: github.event.pull_request.merged == true  # Only run if PR was merged
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
+    environment: ${{ github.event.pull_request.base.ref }}
 
     env:
       WEBHOOKS_DIR: "webhooks"
       PROJECT_ID: ${{ vars.PROJECT_ID }}
       REGION: ${{ vars.REGION }}
-      ENVIRONMENT: ${{ github.ref_name }}
+      ENVIRONMENT: ${{ github.event.pull_request.base.ref }}
 
     steps:
       # 1️⃣ Checkout repository
