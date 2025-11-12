@@ -93,17 +93,14 @@ jobs:
           echo "🚀 Applying Terraform configuration (Dialogflow CX Agent + Tool)..."
           terraform apply -auto-approve tfplan.out
 
-      # 7️⃣ Capture Terraform Outputs
-      - name: Capture Terraform Outputs
+     # 🕐 Wait for Datastore & Tool reflection
+      - name: Wait for Tool synchronization
         if: ${{ github.event.inputs.dry_run == 'false' }}
-        id: extract
-        working-directory: teraform
         run: |
-          echo "📥 Extracting Terraform outputs..."
-          terraform output -json > tf-output.json
-          AGENT_ID=$(jq -r '.agent_name.value' tf-output.json)
-          echo "agent_id=$AGENT_ID" >> $GITHUB_OUTPUT
-          echo "✅ Using Agent ID: $AGENT_ID"
+          echo "🕒 Waiting 20 seconds for Dialogflow Tool + DataStore propagation..."
+          sleep 20
+          echo "✅ Ready to restore the Dialogflow CX agent."
+
 
       # 8️⃣ Install cxcli
       - name: Install cxcli
