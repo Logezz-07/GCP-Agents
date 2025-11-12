@@ -1,0 +1,40 @@
+{
+  "name": "7e77bb5e-8d43-4271-95bc-3268f1885711",
+  "displayName": "R4B-DS-Test",
+  "dataStoreSpec": {
+    "dataStoreConnections": [ {
+      "dataStoreType": "UNSTRUCTURED",
+      "dataStore": "projects/205115177972/locations/us/collections/default_collection/dataStores/techsupport_1761806163595",
+      "documentProcessingMode": "DOCUMENTS",
+      "engineType": "CHAT_ENGINE",
+      "connectorConfig": {
+      
+      },
+      "createTime": {
+        "seconds": 1761806167,
+        "nanos": 913483000
+      },
+      "displayName": "TechSupport",
+      "dialogflowAddTime": {
+        "seconds": 1762972547,
+        "nanos": 504000000
+      }
+    } ],
+    "models": {
+      "summarizationModel": {
+        "model": "default"
+      },
+      "rewriterModel": {
+        "model": "default"
+      }
+    },
+    "groundingSettings": {
+    
+    },
+    "payloadSettings": {
+    
+    },
+    "mode": "MODE_DEFAULT"
+  },
+  "toolType": "CUSTOMIZED_TOOL"
+}
