@@ -135,14 +135,6 @@ jobs:
             echo "⚠️ No tools directory found. Skipping tool update."
           fi
 
-      # 7️⃣.2 Wait for Tool reflection
-      - name: Wait for Tool synchronization
-        if: ${{ github.event.inputs.dry_run == 'false' }}
-        run: |
-          echo "🕒 Waiting 25 seconds for Dialogflow Tool + DataStore propagation..."
-          sleep 25
-          echo "✅ Tool reflection complete."
-
       # 8️⃣ Install cxcli globally
       - name: Install cxcli globally
         if: ${{ github.event.inputs.dry_run == 'false' }}
